@@ -53,6 +53,11 @@ const upload = multer({
 // Serve uploaded images
 app.use('/uploads', express.static(uploadsDir));
 
+// Root route redirect to admin
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Get all images
 app.get('/api/images', (req, res) => {
   fs.readdir(uploadsDir, (err, files) => {
