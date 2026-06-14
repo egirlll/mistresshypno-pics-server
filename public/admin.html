@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MistressHypno Pics Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(30, 30, 50, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            border: 2px solid #ff1493;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: #ff1493;
+            text-align: center;
+        }
+
+        .upload-section {
+            background: rgba(255, 20, 147, 0.1);
+            border: 2px dashed #ff1493;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            background: rgba(255, 20, 147, 0.2);
+        }
+
+        .upload-section input {
+            display: none;
+        }
+
+        .upload-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 20, 147, 0.4);
+        }
+
+        .images-section h2 {
+            margin: 30px 0 20px;
+            color: #ff69b4;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .image-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #ff1493;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 20, 147, 0.3);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-info {
+            padding: 12px;
+            font-size: 12px;
+            color: #ff69b4;
+            word-break: break-all;
+        }
+
+        .delete-btn {
+            width: 100%;
+            padding: 8px;
+            background: #ff1493;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #ff69b4;
+        }
+
+        .auth-section {
+            background: rgba(255, 20, 147, 0.1);
+            border: 1px solid #ff1493;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #ff1493;
+            border-radius: 6px;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .auth-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(0, 255, 0, 0.1);
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            display: block;
+        }
+
+        .status.error {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+            display: block;
+        }
+
+        .count {
+            text-align: center;
+            font-size: 14px;
+            color: #ff69b4;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MistressHypno Pics 🖼️</h1>
+
+        <div class="auth-section">
+            <label for="authCode" style="display: block; margin-bottom: 10px; color: #ff69b4;">Auth Code:</label>
+            <input type="password" id="authCode" class="auth-input" placeholder="Enter auth code to upload/delete">
+        </div>
+
+        <div class="upload-section" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" multiple accept="image/*">
+            <button class="upload-btn">Click to Upload or Drag Images</button>
+            <p style="margin-top: 10px; color: #ff69b4; font-size: 14px;">JPG, PNG, GIF, WebP</p>
+        </div>
+
+        <div id="uploadStatus" class="status"></div>
+
+        <div class="images-section">
+            <h2>Gallery (<span id="imageCount">0</span> images)</h2>
+            <div class="images-grid" id="imagesGrid">
+                <p style="grid-column: 1/-1; text-align: center; color: #ff69b4;">Loading images...</p>
+            </div>
+        </div>
+
+        <div class="count">
+            Total images: <span id="totalCount">0</span>
+        </div>
+    </div>
+
+    <script>
+        const authInput = document.getElementById('authCode');
+        const fileInput = document.getElementById('fileInput');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const imagesGrid = document.getElementById('imagesGrid');
+        const imageCount = document.getElementById('imageCount');
+        const totalCount = document.getElementById('totalCount');
+
+        // Drag and drop
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            document.querySelector('.upload-section').style.background = 'rgba(255, 20, 147, 0.3)';
+        });
+
+        document.addEventListener('dragleave', () => {
+            document.querySelector('.upload-section').style.background = 'rgba(255, 20, 147, 0.1)';
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            document.querySelector('.upload-section').style.background = 'rgba(255, 20, 147, 0.1)';
+            const files = e.dataTransfer.files;
+            uploadFiles(files);
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            uploadFiles(e.target.files);
+        });
+
+        // Upload files
+        async function uploadFiles(files) {
+            const authCode = authInput.value;
+            if (!authCode) {
+                showStatus('Please enter auth code first', 'error');
+                return;
+            }
+
+            for (let file of files) {
+                if (!file.type.startsWith('image/')) continue;
+
+                const formData = new FormData();
+                formData.append('image', file);
+
+                try {
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authCode}`
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Upload failed: ${response.status}`);
+                    }
+
+                    showStatus(`✓ ${file.name} uploaded successfully`, 'success');
+                } catch (err) {
+                    showStatus(`✗ Failed to upload ${file.name}: ${err.message}`, 'error');
+                }
+            }
+
+            fileInput.value = '';
+            loadImages();
+        }
+
+        // Load images
+        async function loadImages() {
+            try {
+                const response = await fetch('/api/images');
+                const images = await response.json();
+
+                imageCount.textContent = images.length;
+                totalCount.textContent = images.length;
+
+                if (images.length === 0) {
+                    imagesGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #ff69b4;">No images yet</p>';
+                    return;
+                }
+
+                imagesGrid.innerHTML = images.map(img => `
+                    <div class="image-card">
+                        <img src="${img.url}" alt="${img.filename}">
+                        <div class="image-info">${img.filename.substring(0, 20)}...</div>
+                        <button class="delete-btn" onclick="deleteImage('${img.filename}')">Delete</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                imagesGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #ff6b6b;">Failed to load images: ${err.message}</p>`;
+            }
+        }
+
+        // Delete image
+        async function deleteImage(filename) {
+            const authCode = authInput.value;
+            if (!authCode) {
+                showStatus('Please enter auth code first', 'error');
+                return;
+            }
+
+            if (!confirm(`Delete ${filename}?`)) return;
+
+            try {
+                const response = await fetch(`/api/images/${filename}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authCode}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Delete failed');
+                }
+
+                showStatus(`✓ ${filename} deleted`, 'success');
+                loadImages();
+            } catch (err) {
+                showStatus(`✗ Failed to delete: ${err.message}`, 'error');
+            }
+        }
+
+        // Show status
+        function showStatus(msg, type) {
+            uploadStatus.textContent = msg;
+            uploadStatus.className = `status ${type}`;
+            setTimeout(() => {
+                uploadStatus.className = 'status';
+            }, 3000);
+        }
+
+        // Load images on page load
+        loadImages();
+
+        // Refresh every 5 seconds
+        setInterval(loadImages, 5000);
+    </script>
+</body>
+</html>
