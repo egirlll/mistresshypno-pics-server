@@ -63,7 +63,7 @@ app.get('/api/images', (req, res) => {
   fs.readdir(uploadsDir, (err, files) => {
     if (err) return res.status(500).json({ error: 'Failed to read images' });
     
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const baseUrl = `https://${req.get('host')}`;
     const images = files.filter(f => 
       /\.(jpg|jpeg|png|gif|webp)$/i.test(f)
     ).map(f => ({
@@ -88,7 +88,7 @@ app.get('/api/random-image', (req, res) => {
       return res.status(404).json({ error: 'No images found' });
     }
     
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const baseUrl = `https://${req.get('host')}`;
     const randomImage = images[Math.floor(Math.random() * images.length)];
     res.json({ url: `${baseUrl}/uploads/${randomImage}` });
   });
@@ -100,7 +100,7 @@ app.post('/api/upload', requireAuth, upload.single('image'), (req, res) => {
     return res.status(400).json({ error: 'No file uploaded' });
   }
   
-  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const baseUrl = `https://${req.get('host')}`;
   res.json({
     success: true,
     filename: req.file.filename,
