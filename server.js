@@ -11,7 +11,6 @@ const AUTH_CODE = process.env.AUTH_CODE || 'mistress123';
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Auth middleware for write operations
 const requireAuth = (req, res, next) => {
@@ -50,14 +49,6 @@ const upload = multer({
   }
 });
 
-// Serve uploaded images
-app.use('/uploads', express.static(uploadsDir));
-
-// Root route redirect to admin
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 // Get all images
 app.get('/api/images', (req, res) => {
   fs.readdir(uploadsDir, (err, files) => {
@@ -85,58 +76,53 @@ app.get('/api/random-image', (req, res) => {
     );
     
     if (images.length === 0) {
-      return res.status(404).json({ error: 'No images available' });
+      return res.status(404).json({ error: 'No images found' });
     }
     
-    const randomImage = images[Math.floor(Math.random() * images.length)];
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    
-    res.json({ 
-      url: `/uploads/${randomImage}`, 
-      filename: randomImage,
-      fullUrl: `${baseUrl}/uploads/${randomImage}`
-    });
+    const randomImage = images[Math.floor(Math.random() * images.length)];
+    res.json({ url: `${baseUrl}/uploads/${randomImage}` });
   });
 });
 
-// Upload image (requires auth)
+// Upload image
 app.post('/api/upload', requireAuth, upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
   
   const baseUrl = `${req.protocol}://${req.get('host')}`;
-  res.json({ 
+  res.json({
     success: true,
     filename: req.file.filename,
     url: `${baseUrl}/uploads/${req.file.filename}`
   });
 });
 
-// Delete image (requires auth)
-app.delete('/api/images/:filename', requireAuth, (req, res) => {
+// Delete image
+app.delete('/api/delete/:filename', requireAuth, (req, res) => {
   const filename = req.params.filename;
-  const filepath = path.join(uploadsDir, filename);
+  const filePath = path.join(uploadsDir, filename);
   
-  // Prevent path traversal
-  if (!filepath.startsWith(uploadsDir)) {
-    return res.status(403).json({ error: 'Invalid filename' });
+  // Prevent directory traversal
+  if (!filePath.startsWith(uploadsDir)) {
+    return res.status(400).json({ error: 'Invalid filename' });
   }
   
-  fs.unlink(filepath, (err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Failed to delete image' });
-    }
+  fs.unlink(filePath, (err) => {
+    if (err) return res.status(500).json({ error: 'Failed to delete image' });
     res.json({ success: true });
   });
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'mistresshypno-pics' });
+// Serve uploaded images
+app.use('/uploads', express.static(uploadsDir));
+
+// Serve admin panel
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`MistressHypno Pics Server running on port ${PORT}`);
-  console.log(`Admin dashboard: http://localhost:${PORT}/admin.html`);
+  console.log(`Image service running on port ${PORT}`);
 });
